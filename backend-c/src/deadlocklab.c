@@ -6,19 +6,20 @@
 
 static DlValidation valid(void) { DlValidation v = { .ok = true, .message = "" }; return v; }
 static DlValidation invalid(const char *message) { DlValidation v = { .ok = false }; snprintf(v.message, sizeof v.message, "%s", message); return v; }
-static bool identifier(const char *s){if(!s||!isalpha((unsigned char)s[0]))return false;for(size_t i=1;s[i];i++)if(!isalnum((unsigned char)s[i])&&s[i]!='_'&&s[i]!='-')return false;return true;}
+static bool identifier(const char *s,size_t capacity){if(!s||!memchr(s,0,capacity)||!isalpha((unsigned char)s[0]))return false;for(size_t i=1;s[i];i++)if(!isalnum((unsigned char)s[i])&&s[i]!='_'&&s[i]!='-')return false;return true;}
 
 DlValidation dl_validate(const DlScenario *s) {
     if (!s) return invalid("scenario is required");
     if (s->process_count > DL_MAX_PROCESSES || s->resource_count > DL_MAX_RESOURCES) return invalid("scenario exceeds configured process/resource limits");
-    if(s->id[0]&&!identifier(s->id))return invalid("scenario identifier must use letters, digits, underscore, or hyphen");
+    if(!memchr(s->id,0,sizeof s->id)||(s->id[0]&&!identifier(s->id,sizeof s->id)))return invalid("scenario identifier must use letters, digits, underscore, or hyphen");
     for (size_t i=0;i<s->process_count;i++) {
-        if (!identifier(s->processes[i])) return invalid("process identifiers must start with a letter and use only letters, digits, underscore, or hyphen");
+        if (!identifier(s->processes[i],sizeof s->processes[i])) return invalid("process identifiers must start with a letter and use only letters, digits, underscore, or hyphen");
         for (size_t k=0;k<i;k++) if (!strcmp(s->processes[k],s->processes[i])) return invalid("process identifiers must be unique");
         for (size_t j=0;j<s->resource_count;j++) if (s->allocation[i][j]<0 || s->request[i][j]<0) return invalid("allocation and request counts must be non-negative");
+        if(s->terminated[i])for(size_t j=0;j<s->resource_count;j++)if(s->allocation[i][j]!=0||s->request[i][j]!=0)return invalid("terminated processes must have zero live allocation and request");
     }
     for (size_t j=0;j<s->resource_count;j++) {
-        if (!identifier(s->resources[j])) return invalid("resource identifiers must start with a letter and use only letters, digits, underscore, or hyphen");
+        if (!identifier(s->resources[j],sizeof s->resources[j])) return invalid("resource identifiers must start with a letter and use only letters, digits, underscore, or hyphen");
         for (size_t k=0;k<j;k++) if (!strcmp(s->resources[k],s->resources[j])) return invalid("resource identifiers must be unique");
         if (s->total[j]<0 || s->available[j]<0) return invalid("resource counts must be non-negative");
         long long sum=s->available[j];
@@ -48,9 +49,9 @@ DlValidation dl_detect(const DlScenario *s, DlDetection *out) {
     return valid();
 }
 
-DlValidation dl_recover_terminate(const DlScenario *s,size_t victim,DlScenario *out){DlValidation v=dl_validate(s);if(!v.ok)return v;if(!out||victim>=s->process_count||s->terminated[victim])return invalid("victim must be an active process");*out=*s;for(size_t j=0;j<s->resource_count;j++){if(out->available[j]>INT_MAX-out->allocation[victim][j])return invalid("resource arithmetic overflow");out->available[j]+=out->allocation[victim][j];out->allocation[victim][j]=0;}out->terminated[victim]=true;return dl_validate(out);}
+DlValidation dl_recover_terminate(const DlScenario *s,size_t victim,DlScenario *out){DlValidation v=dl_validate(s);if(!v.ok)return v;if(!out||victim>=s->process_count||s->terminated[victim])return invalid("victim must be an active process");DlScenario candidate=*s;for(size_t j=0;j<s->resource_count;j++){if(candidate.available[j]>INT_MAX-candidate.allocation[victim][j])return invalid("resource arithmetic overflow");candidate.available[j]+=candidate.allocation[victim][j];candidate.allocation[victim][j]=0;candidate.request[victim][j]=0;}candidate.terminated[victim]=true;v=dl_validate(&candidate);if(!v.ok)return v;*out=candidate;return valid();}
 
-DlValidation dl_recover_preempt(const DlScenario *s,size_t victim,size_t resource,DlScenario *out){DlValidation v=dl_validate(s);if(!v.ok)return v;if(!out||victim>=s->process_count||resource>=s->resource_count||s->terminated[victim])return invalid("victim and resource must identify an active process/resource");if(!s->preemptible[resource])return invalid("resource is not configured as preemptible");int amount=s->allocation[victim][resource];if(amount<=0)return invalid("victim holds no instances of this resource");if(s->request[victim][resource]>INT_MAX-amount||s->available[resource]>INT_MAX-amount)return invalid("resource arithmetic overflow");*out=*s;out->available[resource]+=amount;out->allocation[victim][resource]=0;out->request[victim][resource]+=amount;return dl_validate(out);}
+DlValidation dl_recover_preempt(const DlScenario *s,size_t victim,size_t resource,DlScenario *out){DlValidation v=dl_validate(s);if(!v.ok)return v;if(!out||victim>=s->process_count||resource>=s->resource_count||s->terminated[victim])return invalid("victim and resource must identify an active process/resource");if(!s->preemptible[resource])return invalid("resource is not configured as preemptible");int amount=s->allocation[victim][resource];if(amount<=0)return invalid("victim holds no instances of this resource");if(s->available[resource]>INT_MAX-amount)return invalid("resource arithmetic overflow");DlScenario candidate=*s;candidate.available[resource]+=amount;candidate.allocation[victim][resource]=0;v=dl_validate(&candidate);if(!v.ok)return v;*out=candidate;return valid();}
 
 const char *dl_fixture_ids(size_t i){static const char *ids[]={"no-deadlock","two-process-deadlock","multi-instance","zero-allocation","recovery-case"};return i<5?ids[i]:NULL;}
 void dl_fixture(const char *id,DlScenario *s){memset(s,0,sizeof *s);snprintf(s->id,sizeof s->id,"%s",id);s->process_count=2;s->resource_count=2;strcpy(s->processes[0],"P1");strcpy(s->processes[1],"P2");strcpy(s->resources[0],"R1");strcpy(s->resources[1],"R2");
