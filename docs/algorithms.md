@@ -1,17 +1,17 @@
 # Algorithms and model
 
-## Multiple-instance detection
+## Multiple-instance matrix detector
 
-For each resource type, Work begins at Available. Finish is initialized true for zero-allocation processes and false for processes holding resources. The detector scans processes in stable input order; for every unfinished process it records the vector comparison Request ≤ Work. If eligible, it simulates completion, adds Allocation to Work, marks Finish true, and continues scanning. It stops after a full pass makes no progress. Remaining unfinished processes are reported as deadlocked under this detection model. This is deterministic and does not mutate the input.
+In `backend-c/src/deadlocklab.c`, Work begins as Available. Finish is true for terminated processes and for active processes with a zero allocation row; otherwise it begins false. The detector evaluates unfinished processes in stable input order and records Work, Request, component comparisons, decision, released Allocation, and updated Work. When Request ≤ Work, it simulates completion by returning the allocation to Work. A full scan with no progress ends detection. Remaining unfinished processes form the detector result under this model. The input scenario is never modified.
 
-## Graph model
+## Resource allocation graph
 
-The UI draws request edges P → R and allocation edges R → P, annotated with instance counts. Under a single-instance-per-resource model, a cycle proves deadlock. With multiple instances, a cycle is not sufficient; use matrix detection. WaitForGraphDetector exposes cycle evaluation for an explicitly constructed wait-for graph.
+The browser derives process-to-resource request edges and resource-to-process allocation edges from the same scenario matrices. A cycle proves deadlock only for the appropriate single-instance model. With multiple resource instances, a cycle alone is not sufficient; matrix detection is used.
 
-## Banker’s algorithm
+## Banker’s safety algorithm
 
-Not implemented. Banker’s safety testing requires Max claims and Need = Max − Allocation, and checks for a safe completion sequence. It is an avoidance/safety algorithm and must not be reported as general deadlock detection.
+Not implemented. Banker’s algorithm requires Max claims and Need = Max − Allocation and evaluates existence of a safe completion order. It is an avoidance/safety algorithm, not the general detector implemented here.
 
 ## Recovery
 
-Termination records the process as ended, releases every allocated instance to Available, and clears its allocation row. Preemption is allowed only for a configured preemptible resource. The process allocation is removed and its outstanding request is increased by the reclaimed amount, representing rollback/compensation. Checkpoint rollback returns the supplied complete saved scenario after validation. The API reruns detection after each action. The current interface exposes termination; preemption and rollback are available to backend callers. No real operating-system cost is measured.
+Termination marks a process terminated, clears its allocation row, and releases those counts to Available. Preemption is limited to resources marked preemptible; the reclaimed allocation is returned to Available, removed from the victim’s Allocation, and added to its outstanding Request to represent rollback/compensation. Each transition validates the resource invariant. The API reruns detection after recovery. No real kernel state or recovery-cost measurement is involved.

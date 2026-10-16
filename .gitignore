@@ -1,5 +1,6 @@
 # Java / Maven
 **/target/
+backend-c/build/
 *.class
 hs_err_pid*
 # Node / Vite

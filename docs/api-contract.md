@@ -1,14 +1,14 @@
-# API contract
+# C API contract
 
-Base URL: `http://localhost:8080/api`. JSON uses camelCase. Scenario includes `id`, `processes`, `resources`, `total`, `available`, `allocation`, `request`, `preemptible`, and `terminated`.
+Base URL: `http://localhost:8080/api`. JSON uses camelCase. Scenario properties are `id`, `processes`, `resources`, `total`, `available`, `allocation`, `request`, `preemptible`, and `terminated`.
 
 ```json
-{"id":"example","processes":["P1"],"resources":["R1"],"total":[1],"available":[0],"allocation":[[1]],"request":[[1]],"preemptible":[true],"terminated":[]}
+{"id":"case","processes":["P1"],"resources":["R1"],"total":[1],"available":[0],"allocation":[[1]],"request":[[1]],"preemptible":[false],"terminated":[]}
 ```
 
-- `GET /health` → `{ "status": "ok", "version": "1.0.0" }`
-- `GET /scenarios` and `GET /scenarios/{id}` → deterministic fixture(s)
-- `POST /detect` with Scenario → `{ "deadlocked": [...], "trace": [...], "finalWork": [...] }`. Each trace step contains process, workBefore, request, componentFits, eligible, releasedAllocation, workAfter, decision.
-- `POST /recover` accepts `{ "action":"terminate", "scenario":{...}, "process":"P1" }` and returns `{ "scenario":{...}, "detection":{...} }`. Actions accepted by the service are `terminate`, `preempt` (requires `resource`), and `rollback` (requires `checkpoint`).
+- `GET /health` returns status, version, and C runtime.
+- `GET /scenarios` and `GET /scenarios/{id}` return deterministic fixtures.
+- `POST /detect` accepts the complete scenario and returns `deadlocked`, ordered `trace` steps, and `finalWork`. A trace step contains process, workBefore, request, componentFits, eligible, releasedAllocation, workAfter, and decision.
+- `POST /recover` accepts `{ "action":"terminate", "scenario":{...}, "process":"P1" }` or the `preempt` action with a resource identifier. It returns the validated updated scenario and a fresh detection result.
 
-Invalid dimensions, negative counts, inconsistent totals, invalid victims, and forbidden preemption return HTTP 400 with `{ "error":"validation_error", "message":"..." }`. Missing scenario IDs return 404. Detection is stateless; include the complete state on every request.
+HTTP 400 returns a JSON validation error for malformed state, invalid accounting, or invalid recovery. Unknown fixture IDs and paths return 404. CORS permits the Vite development origin `http://localhost:5173`. Requests and responses are capped for this teaching server; its single-threaded request loop is not intended for production traffic.

@@ -3,100 +3,101 @@
 **Team 12 · Operating Systems**  
 K. Shiva Reddy (2520030105) · Dakur Manoj Kumar (2520030040)
 
-DeadlockLab is an interactive OS laboratory for constructing resource allocation states, running the multiple-instance detection algorithm, following its Work/Request trace, and simulating process termination recovery.
+DeadlockLab is a Linux-first operating-systems laboratory. Its detection and recovery engine is written in C17, its API is a small POSIX socket server, and its responsive browser interface is React and TypeScript.
 
 ## Problem and objectives
 
-Deadlock is difficult to reason about from a static allocation table. This project makes the state and every detection decision visible. Students can switch deterministic fixtures, edit allocation/request entries, inspect the derived resource-allocation graph, replay a trace, and terminate a selected process to observe resource release and rerun detection.
+The simulator makes resource allocation state and deadlock detection decisions visible. Students can load deterministic examples, edit processes, resource types, totals, availability, allocation and request matrices, inspect a resource-allocation graph, step through the matrix detector, and simulate recovery.
 
 ## Features
 
-- Spring Boot REST API with stateless detection and explicit scenario payloads.
-- Matrix detector implements Work = Available, zero-allocation Finish initialization, deterministic process order, component comparisons, and simulated release.
-- Single-instance wait-for graph cycle helper. A graph cycle is not represented as proof of deadlock for multiple instances.
-- Invariant validation for dimensions, nonnegative counts, unique IDs, and resource totals.
-- Termination recovery that clears the victim allocation, releases instances, validates state, and reruns detection.
-- React + TypeScript responsive dashboard, live API-backed fixtures, editable matrices, graph derived from canonical state, trace navigation, event list, and JSON export.
-- Learning guide explains Coffman conditions, RAG assumptions, detection and avoidance.
-
-## Limitations
-
-The API has in-memory deterministic fixtures and no persistence. Terminated processes remain in the scenario as historical rows with zero allocations. The UI currently exposes termination recovery; preemption and checkpoint rollback are implemented in the domain service but not yet exposed as UI actions. Cost fields are illustrative only; Banker’s safety checking, seeded experiments, import, and full replay are not implemented. Resource instances are counts rather than individually identified objects. The graph is a custom SVG view with pan/zoom not currently implemented.
+- C17 domain model and standalone matrix detector, independent of HTTP and UI code.
+- POSIX HTTP/1.1 API with deterministic fixtures and stateless detection requests.
+- Work/Request component trace, deterministic evaluation order, validation and resource-accounting invariants.
+- Process termination and configured resource preemption with rollback/compensation semantics.
+- React + TypeScript light-theme UI with scenario editing, SVG graph, trace controls, fixture library, event list, JSON export, guide, and responsive layouts.
+- Scroll reveals, animated graph edges and nodes, animated trace steps, subtle hover responses, a scroll progress cue, and reduced-motion support.
+- GitHub Actions builds/tests the C server on Ubuntu and checks/tests/builds the frontend.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-  UI[React TypeScript dashboard] -->|REST JSON| API[Spring Boot API]
-  API --> VALID[Scenario validation]
-  API --> DET[Matrix detector]
-  API --> REC[Recovery service]
-  API --> LIB[Fixture library]
-  VALID --> DOMAIN[Immutable scenario model]
-  DET --> DOMAIN
-  REC --> DOMAIN
-  UI --> DERIVE[Graph derived from scenario matrices]
+  UI[React TypeScript] -->|REST JSON| API[C17 POSIX HTTP server]
+  API --> JSON[Request validation and JSON mapping]
+  JSON --> CORE[C scenario and invariant model]
+  CORE --> DET[Matrix detector and trace]
+  CORE --> REC[Validated recovery]
+  API --> FIX[Deterministic fixture library]
 ```
 
-Details: [docs/architecture.md](docs/architecture.md), [docs/algorithms.md](docs/algorithms.md), [docs/api-contract.md](docs/api-contract.md), [docs/test-plan.md](docs/test-plan.md), [docs/demo-script.md](docs/demo-script.md).
+The algorithm core is portable C. The network server targets POSIX/Linux and handles one request at a time for this classroom demo. It uses no database and no third-party C library.
+
+More detail: [architecture](docs/architecture.md), [algorithms](docs/algorithms.md), [API contract](docs/api-contract.md), [test plan](docs/test-plan.md), [demo script](docs/demo-script.md).
 
 ## Prerequisites
 
-- Java 17 or newer (CI targets 21).
-- Maven 3.9+ (Maven is not bundled in this checkout).
-- Node.js 20+ and npm.
+- Ubuntu 22.04+ or another Linux distribution with POSIX sockets.
+- GCC or Clang with C17 support, GNU Make.
+- Node.js 20+ and npm for the web client.
 
-## Run on Windows PowerShell
+The current Windows environment has MinGW GCC for testing the portable C core, but WSL reports `E_ACCESSDENIED`; the POSIX API server must be run in Linux/WSL. The C API is not a Java/Spring application.
 
-Terminal 1, backend:
+## Run on Ubuntu / WSL
 
-```powershell
-cd .\backend
-mvn spring-boot:run
+From the repository root, terminal 1:
+
+```bash
+cd backend-c
+make test
+make
+./build/deadlocklab-server
 ```
 
-Terminal 2, frontend:
+Terminal 2:
 
-```powershell
-cd .\frontend
-npm.cmd ci
-npm.cmd run dev
+```bash
+cd frontend
+npm ci
+npm run dev
 ```
 
-Open the Vite URL (normally `http://localhost:5173`). API defaults to `http://localhost:8080/api`; set `VITE_API_URL` in a local `.env` to change it.
+Open `http://localhost:5173`. The API defaults to `http://localhost:8080/api`; set `VITE_API_URL` in a local `.env` file to override it. Set `PORT` to change the C server port.
 
-## Tests and production build
+## Checks and production build
 
-```powershell
-cd .\backend
-mvn test
-cd ..\frontend
-npm.cmd ci
-npm.cmd test
-npm.cmd run lint
-npm.cmd run build
+```bash
+cd backend-c
+make clean test all
+cd ../frontend
+npm ci
+npm run lint
+npm test -- --reporter=dot
+npm run build
 ```
 
-Expected fixture results: `no-deadlock` → no unfinished processes; `two-process-deadlock` → P1 and P2; `multi-instance` → no unfinished processes because P3 completes and releases an instance. Terminating P1 in the two-process fixture releases R1 and allows P2 to complete.
+Fixture expectations: `no-deadlock` → no unfinished processes; `two-process-deadlock` → P1 and P2; `multi-instance` → no unfinished processes; `zero-allocation` → P2 remains unfinished. Terminating P1 in the two-process fixture returns R1 and allows P2 to finish.
 
-## API quick examples
+## API examples
 
-```powershell
-Invoke-RestMethod http://localhost:8080/api/health
-Invoke-RestMethod http://localhost:8080/api/scenarios
-$scenario = Invoke-RestMethod http://localhost:8080/api/scenarios/two-process-deadlock
-Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/detect -ContentType 'application/json' -Body ($scenario | ConvertTo-Json -Depth 20)
+```bash
+curl http://localhost:8080/api/health
+curl http://localhost:8080/api/scenarios
+curl http://localhost:8080/api/scenarios/two-process-deadlock
+curl -X POST http://localhost:8080/api/detect \
+  -H 'Content-Type: application/json' \
+  --data-binary @scenario.json
 ```
 
-Full payload shapes and responses are in [the API contract](docs/api-contract.md).
+See [the API contract](docs/api-contract.md) for payloads and errors.
 
 ## Troubleshooting
 
-- **Frontend reports backend unavailable:** start the backend first and check `/api/health`.
-- **PowerShell says npm.ps1 is blocked:** invoke `npm.cmd` as shown above.
-- **mvn is not recognized:** install Maven 3.9+ and ensure `mvn` is on PATH. This repository currently has no Maven wrapper.
-- **Port occupied:** configure Spring `server.port` or Vite’s port, and update `VITE_API_URL` if needed.
+- **`make` or `gcc` missing:** install build tools with `sudo apt update && sudo apt install build-essential`.
+- **Windows reports POSIX header errors:** use a Linux distribution or WSL for the HTTP server. The standalone C core tests compile with MinGW GCC.
+- **Frontend reports backend offline:** start `backend-c/build/deadlocklab-server` and check `/api/health`.
+- **Port 8080 is occupied:** run `PORT=8081 ./build/deadlocklab-server` and set `VITE_API_URL=http://localhost:8081/api`.
 
 ## Attribution and license
 
-Original student project code; no third-party assets or source code are intentionally reused. Dependencies retain their respective licenses. Project license: MIT (see [LICENSE](LICENSE)).
+Original student project implementation; no external code/assets are intentionally reused. Dependencies retain their respective licenses. Project license: [MIT](LICENSE).

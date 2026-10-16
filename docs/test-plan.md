@@ -1,7 +1,7 @@
 # Test plan
 
-Backend JUnit coverage includes no-deadlock and deadlock fixtures, multi-instance completion, deterministic repeat detection, no input mutation, termination release and post-recovery verification, wait-for cycle/no-cycle behavior, and invalid accounting rejection. Expand with randomized reference comparisons, malformed dimensions/identifiers, zero-allocation request behavior, invalid preemption, and checkpoint tests.
+`make test` compiles the C implementation with strict warnings and runs deterministic fixtures for empty/zero-allocation behavior, no deadlock, two-process deadlock, multiple instances, termination recovery, valid and invalid preemption, and nonnegative counts. Recovery tests check post-transition resource accounting and rerun detection. GitHub Actions runs this on Ubuntu, which also compiles the POSIX server.
 
-Frontend Vitest/Testing Library covers fixture loading, matrix edit followed by real API detection, API error visibility, and trace navigation. Manual acceptance: load two-process fixture, run detector, inspect trace, terminate P1, confirm, and verify rerun has no deadlocked processes. Graph edges should reflect edited matrix values. Use keyboard Tab/Enter and narrow mobile viewport checks.
+Frontend Vitest covers live API fixture loading, canonical matrix editing, process creation with correctly sized rows, API error display, and trace navigation. TypeScript checking and Vite production build run in CI.
 
-CI runs Maven tests and frontend npm ci, TypeScript lint, Vitest, and Vite production build.
+Manual demo check: start C API, load the two-process fixture, run detection, inspect trace, terminate P1, confirm the updated state and empty deadlocked set, then load the multiple-instance fixture. Check browser keyboard navigation and a mobile viewport. Future extensions should add JSON fuzzing, malformed HTTP request tests, recovery confirmation tests, deterministic history replay tests, and seeded reference comparisons.
