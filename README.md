@@ -12,7 +12,8 @@ The simulator makes resource allocation state and deadlock detection decisions v
 ## Features
 
 - C17 domain model and standalone matrix detector, independent of HTTP and UI code.
-- POSIX HTTP/1.1 API with deterministic fixtures and stateless detection requests.
+- POSIX HTTP/1.1 API with deterministic fixtures and stateless detection requests. It binds to `127.0.0.1` only; non-loopback `BIND_ADDRESS` values are refused.
+- Bounded JSON parsing with complete syntax validation, duplicate-key rejection, typed fields, exact scenario keys, and bounded request sizes.
 - Work/Request component trace, deterministic evaluation order, validation and resource-accounting invariants.
 - Process termination and configured resource preemption with rollback/compensation semantics.
 - React + TypeScript light-theme UI with scenario editing, SVG graph, trace controls, fixture library, event list, JSON export, guide, and responsive layouts.
@@ -21,7 +22,7 @@ The simulator makes resource allocation state and deadlock detection decisions v
 
 ## Limitations
 
-The C HTTP server handles requests sequentially and is intended for a local demo. Scenarios live in deterministic fixtures or the browser session; there is no database. The UI currently exposes process termination, but not resource-preemption or checkpoint-rollback controls. JSON export is available; strict import and deterministic event replay are not implemented. Banker’s safety mode and experiment generation are also not implemented. The graph is SVG-derived from state, without graph-editor drag/pan controls. Recovery-cost values are illustrative and do not represent measured OS behavior.
+The C HTTP server handles requests sequentially and is intended for a local demo. It accepts bounded HTTP/1.1 requests with three-second socket timeouts; clients must provide `Content-Length` and JSON content type for POST. Transfer-Encoding is rejected. CORS only controls browser access and is not authentication. Scenarios live in deterministic fixtures or the browser session; there is no database. The UI currently exposes process termination, but not resource-preemption or checkpoint-rollback controls. JSON export is available; strict import and deterministic event replay are not implemented. Banker’s safety mode and experiment generation are also not implemented. The graph is SVG-derived from state, without graph-editor drag/pan controls. Recovery-cost values are illustrative and do not represent measured OS behavior.
 
 ## Architecture
 
@@ -35,7 +36,7 @@ flowchart LR
   API --> FIX[Deterministic fixture library]
 ```
 
-The algorithm core is portable C. The network server targets POSIX/Linux and handles one request at a time for this classroom demo. It uses no database and no third-party C library.
+The algorithm core is portable C. The network server targets POSIX/Linux and handles one request at a time for this classroom demo. It uses no database or third-party C runtime dependency; the JSON parser is a small in-tree implementation. The listener is loopback-only by default and currently refuses non-loopback binding.
 
 More detail: [architecture](docs/architecture.md), [algorithms](docs/algorithms.md), [API contract](docs/api-contract.md), [test plan](docs/test-plan.md), [demo script](docs/demo-script.md).
 
@@ -66,7 +67,7 @@ npm ci
 npm run dev
 ```
 
-Open `http://localhost:5173`. The API defaults to `http://localhost:8080/api`; set `VITE_API_URL` in a local `.env` file to override it. Set `PORT` to change the C server port.
+Open `http://localhost:5173`. The API defaults to `http://localhost:8080/api`; set `VITE_API_URL` in a local `.env` file to override it. Set `PORT` to change the C server port. `BIND_ADDRESS` may be omitted or set to `127.0.0.1`/`localhost`; other values are refused.
 
 ## Checks and production build
 
