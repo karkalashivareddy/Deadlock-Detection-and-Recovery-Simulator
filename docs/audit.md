@@ -103,7 +103,7 @@
 
 ### Remaining priority findings
 
-P0 loopback exposure and fragile JSON field search are addressed and verified by Ubuntu CI/live smoke at SHA `299fbbf04d5eb101621fa1a2c5d68bf0d9ea9eb9`. P1 HTTP framing has bounded implementation and adversarial smoke coverage; response serialization still uses a bounded buffer and needs explicit overflow reporting. Resource preemption has now been changed to require an explicit compatible checkpoint, restore the victim's saved live rows, and recompute Available. This latest checkpoint integration awaits CI. Banker’s safety algorithm is implemented in a separate module and exposed through the API and frontend Max-claim editor. Strict import/export schema, event replay and deterministic experiments remain unavailable. Existing RAG remains a visualization only.
+Loopback-only binding, token-based JSON parsing, HTTP framing and checkpoint/import endpoints are verified by Ubuntu CI/live smoke at SHA `40fb4437cdfbf36b407f331c309a3c3f2ce59991`. The Banker phase also passed Ubuntu CI and sanitizer checks at SHA `03340bf97aa88cf14487bcbefc4ad03dbb48e670`. Response serialization still uses a bounded buffer and should report overflow explicitly. Checkpoint recovery and strict import are implemented. Event history/replay UI now has bounded session events, before/after snapshots, detection results, export and read-only navigation; this phase has local frontend verification but awaits its own CI commit. Replay-record import and deterministic experiments remain unavailable. Existing RAG remains a visualization only.
 
 ### Banker implementation audit (subsequent phase)
 

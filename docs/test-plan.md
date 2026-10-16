@@ -6,7 +6,7 @@ The current C suite is split into `test_deadlocklab.c`, `test_json.c`, and `test
 
 The current Windows environment cannot link sanitizers or compile POSIX sockets: MinGW lacks ASan/UBSan runtime libraries and POSIX headers; WSL access returns `E_ACCESSDENIED`. Sanitizer and live server verification are delegated to Ubuntu CI.
 
-Frontend checks currently cover scenario loading/editing, adding processes, API error display, trace navigation, and sending editable Banker Max claims. Mobile, keyboard-only, reduced-motion, import/replay, recovery confirmation and checkpoint UI still need dedicated tests.
+Frontend checks cover scenario loading/editing, adding processes, API error display, trace navigation, editable Banker Max claims, versioned import acceptance/rejection, and read-only replay navigation that leaves the active state intact. Mobile, keyboard-only, reduced-motion, replay-record import, and confirmation cancellation still need dedicated tests.
 
 `make test` compiles the C implementation with strict warnings and runs deterministic fixtures for empty/zero-allocation behavior, no deadlock, two-process deadlock, multiple instances, termination recovery, valid and invalid preemption, and nonnegative counts. Recovery tests check post-transition resource accounting and rerun detection. GitHub Actions runs this on Ubuntu, which also compiles the POSIX server.
 
