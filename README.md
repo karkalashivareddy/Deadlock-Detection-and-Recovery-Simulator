@@ -19,6 +19,10 @@ The simulator makes resource allocation state and deadlock detection decisions v
 - Scroll reveals, animated graph edges and nodes, animated trace steps, subtle hover responses, a scroll progress cue, and reduced-motion support.
 - GitHub Actions builds/tests the C server on Ubuntu and checks/tests/builds the frontend.
 
+## Limitations
+
+The C HTTP server handles requests sequentially and is intended for a local demo. Scenarios live in deterministic fixtures or the browser session; there is no database. The UI currently exposes process termination, but not resource-preemption or checkpoint-rollback controls. JSON export is available; strict import and deterministic event replay are not implemented. Banker’s safety mode and experiment generation are also not implemented. The graph is SVG-derived from state, without graph-editor drag/pan controls. Recovery-cost values are illustrative and do not represent measured OS behavior.
+
 ## Architecture
 
 ```mermaid

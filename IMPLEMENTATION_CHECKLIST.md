@@ -4,7 +4,7 @@
 - [x] Define domain model, validation, API contract, and deterministic fixtures
 - [x] Implement and test matrix detection and single-instance graph detection
 - [x] Implement validated termination, preemption, and checkpoint service transitions
-- [ ] Compile and live-test the C/POSIX HTTP server under Linux (WSL access is denied locally; Ubuntu CI is configured)
+- [x] Compile and live-test the C/POSIX HTTP server under Linux (verified by Ubuntu CI)
 - [x] Build responsive React/TypeScript dashboard, derived graph, process/resource controls, and cinematic light-theme motion
 - [ ] Add checkpoint/preemption UI, strict scenario import, deterministic replay navigation, and optional experiments
 - [x] Add CI and project documentation
@@ -12,4 +12,4 @@
 
 Audit: initial repository had no project source, only .git. Java 25, Node 24, and MinGW GCC 15 are available. The project is now Linux-first C/POSIX; WSL is installed but cannot enumerate distros in this environment (E_ACCESSDENIED).
 
-Verification before the C pivot: Spring Boot tests/package and live endpoint checks passed. After the C pivot: portable C core tests compile with strict warnings and pass under MinGW GCC; frontend TypeScript check, Vitest, and Vite production build pass. The POSIX HTTP server still needs an Ubuntu/WSL build and live API check; this machine's WSL distro access is denied. Visual polish includes scroll reveals, progress cue, SVG edge/node transitions, trace step transitions, hover states, ambient light motion, and reduced-motion support.
+Verification: portable C core compiles with strict warnings and passes under MinGW GCC. GitHub Actions run 38903609539 completed successfully for commit 6d9d0748: Ubuntu C server build/core tests/live API smoke passed; frontend npm ci, TypeScript check, Vitest, and Vite production build passed. Local WSL access is denied, so Linux verification was performed by CI. Visual polish includes scroll reveals, progress cue, SVG edge/node transitions, trace step transitions, hover states, ambient light motion, and reduced-motion support.
