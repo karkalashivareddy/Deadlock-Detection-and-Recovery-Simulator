@@ -41,6 +41,8 @@ DlValidation dl_validate(const DlScenario *scenario);
 DlValidation dl_detect(const DlScenario *scenario, DlDetection *result);
 DlValidation dl_recover_terminate(const DlScenario *input, size_t victim, DlScenario *output);
 DlValidation dl_recover_preempt(const DlScenario *input, size_t victim, size_t resource, DlScenario *output);
+DlValidation dl_recover_rollback(const DlScenario *input, const DlScenario *checkpoint, DlScenario *output);
+DlValidation dl_recover_preempt_from_checkpoint(const DlScenario *input, const DlScenario *checkpoint, size_t victim, size_t resource, DlScenario *output);
 void dl_fixture(const char *id, DlScenario *out);
 const char *dl_fixture_ids(size_t index);
 

@@ -2,7 +2,7 @@
 
 ## Executed coverage
 
-The current C suite is split into `test_deadlocklab.c`, `test_json.c`, and `test_banker.c`; `make test` compiles with strict C17 warnings. `tests/smoke_api.py` launches the real POSIX server and exercises health, fixtures, detection, termination recovery, Banker’s known safe sequence, unknown routes, unsupported methods, missing/invalid Content-Length, rejected Transfer-Encoding, wrong content type, payload-size rejection, body framing and duplicate JSON keys. GitHub Actions runs the C suite and live smoke on Ubuntu. `make sanitize` runs core, parser and Banker tests with AddressSanitizer and UndefinedBehaviorSanitizer.
+The current C suite is split into `test_deadlocklab.c`, `test_json.c`, and `test_banker.c`; `make test` compiles with strict C17 warnings. `tests/smoke_api.py` launches the real POSIX server and exercises health, fixtures, detection, termination, checkpoint rollback/preemption, Banker’s known safe sequence, versioned import round trip, unknown routes, unsupported methods, missing/invalid/duplicate Content-Length, rejected Transfer-Encoding, wrong content type, payload-size rejection, embedded NUL, malformed escapes and duplicate JSON keys. GitHub Actions runs the C suite and live smoke on Ubuntu. `make sanitize` runs core, parser and Banker tests with AddressSanitizer and UndefinedBehaviorSanitizer.
 
 The current Windows environment cannot link sanitizers or compile POSIX sockets: MinGW lacks ASan/UBSan runtime libraries and POSIX headers; WSL access returns `E_ACCESSDENIED`. Sanitizer and live server verification are delegated to Ubuntu CI.
 

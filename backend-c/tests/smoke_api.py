@@ -1,9 +1,13 @@
 import json
+import copy
+import os
 import subprocess
 import time
 import socket
 from urllib.request import Request, urlopen
 
+refused = subprocess.run(["./build/deadlocklab-server"], env={**os.environ, "BIND_ADDRESS": "0.0.0.0"}, capture_output=True, text=True)
+assert refused.returncode == 2 and "Only loopback binding" in refused.stderr
 server = subprocess.Popen(["./build/deadlocklab-server"])
 base = "http://127.0.0.1:8080/api"
 
@@ -55,17 +59,38 @@ try:
     safe = post("/safe-state", banker)
     assert safe["safe"] is True
     assert safe["sequence"] == ["P1", "P3", "P4", "P0", "P2"]
+    current = get("/scenarios/no-deadlock")
+    assert post("/import", {"schemaVersion": 1, "scenario": current}) == current
+    checkpoint = copy.deepcopy(current)
+    checkpoint["allocation"][0][0] = 0
+    checkpoint["available"][0] = 2
+    preempted = post("/recover", {"action": "preempt", "process": "P1", "resource": "R1", "scenario": current, "checkpoint": checkpoint})
+    assert preempted["scenario"]["allocation"][0][0] == 0
+    assert preempted["scenario"]["available"] == [2, 0]
+    restored = post("/recover", {"action": "rollback", "scenario": current, "checkpoint": checkpoint})
+    assert restored["scenario"] == checkpoint
     assert raw_request(b"GET /api/nope HTTP/1.1\r\nHost: localhost\r\n\r\n").startswith(b"HTTP/1.1 404")
     assert raw_request(b"BREW /api/health HTTP/1.1\r\nHost: localhost\r\n\r\n").startswith(b"HTTP/1.1 405")
     assert raw_request(b"POST /api/detect HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\n\r\n{}").startswith(b"HTTP/1.1 400")
     assert raw_request(b"POST /api/detect HTTP/1.1\r\nHost: localhost\r\nContent-Length: nope\r\nContent-Type: application/json\r\n\r\n{}").startswith(b"HTTP/1.1 400")
+    assert raw_request(b"POST /api/detect HTTP/1.1\r\nHost: localhost\r\nContent-Length: 2\r\nContent-Length: 2\r\nContent-Type: application/json\r\n\r\n{}").startswith(b"HTTP/1.1 400")
     assert raw_request(b"POST /api/detect HTTP/1.1\r\nHost: localhost\r\nContent-Length: 2\r\nTransfer-Encoding: chunked\r\nContent-Type: application/json\r\n\r\n{}").startswith(b"HTTP/1.1 501")
     assert raw_request(b"POST /api/detect HTTP/1.1\r\nHost: localhost\r\nContent-Length: 2\r\nContent-Type: text/plain\r\n\r\n{}").startswith(b"HTTP/1.1 415")
     assert raw_request(b"POST /api/detect HTTP/1.1\r\nHost: localhost\r\nContent-Length: 999999999\r\nContent-Type: application/json\r\n\r\n").startswith(b"HTTP/1.1 413")
+    assert raw_request(b"POST /api/detect HTTP/1.1\r\nHost: localhost\r\nContent-Length: 300000\r\nContent-Type: application/json\r\n\r\n").startswith(b"HTTP/1.1 413")
+    invalid_escape = b'{"bad":"\\x"}'
+    rejected_escape = raw_request(b"POST /api/detect HTTP/1.1\r\nHost: localhost\r\nContent-Length: " + str(len(invalid_escape)).encode() + b"\r\nContent-Type: application/json\r\n\r\n" + invalid_escape)
+    assert rejected_escape.startswith(b"HTTP/1.1 400")
     assert raw_request(b"POST /api/detect HTTP/1.1\r\nHost: localhost\r\nContent-Length: 2\r\nContent-Type: application/json\r\n\r\n{} ").startswith(b"HTTP/1.1 200") is False
     malformed = b'{"id":"x","id":"y"}'
     duplicate = raw_request(b"POST /api/detect HTTP/1.1\r\nHost: localhost\r\nContent-Length: " + str(len(malformed)).encode() + b"\r\nContent-Type: application/json\r\n\r\n" + malformed)
     assert duplicate.startswith(b"HTTP/1.1 400")
+    duplicate_import = b'{"schemaVersion":1,"schemaVersion":1,"scenario":{}}'
+    duplicate_import_response = raw_request(b"POST /api/import HTTP/1.1\r\nHost: localhost\r\nContent-Length: " + str(len(duplicate_import)).encode() + b"\r\nContent-Type: application/json\r\n\r\n" + duplicate_import)
+    assert duplicate_import_response.startswith(b"HTTP/1.1 400")
+    nul_body = json.dumps({"schemaVersion": 1, "scenario": current}).encode() + b"\x00ignored"
+    nul_response = raw_request(b"POST /api/import HTTP/1.1\r\nHost: localhost\r\nContent-Length: " + str(len(nul_body)).encode() + b"\r\nContent-Type: application/json\r\n\r\n" + nul_body)
+    assert nul_response.startswith(b"HTTP/1.1 400")
     print("C POSIX API smoke tests passed")
 finally:
     server.terminate()

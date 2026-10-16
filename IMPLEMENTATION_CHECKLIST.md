@@ -14,9 +14,10 @@
 
 ## Remaining work
 
-- [ ] Model resource preemption with explicit rollback/restart state; current API behavior is a limited compensation simulation and must not be described as OS rollback.
-- [ ] Add immutable checkpoint snapshots and deterministic rollback.
-- [ ] Add versioned strict scenario import/export and replayable event history.
+- [x] Model resource preemption using a compatible saved checkpoint; restore victim allocation/request rows, recompute availability, validate, and rerun detection.
+- [x] Add browser-session immutable checkpoint snapshots and full state rollback; no instruction-level process state is modeled.
+- [x] Add strict versioned scenario import/export; C API rejects duplicates, unknown fields, malformed syntax, NUL/trailing bytes, and invalid state.
+- [ ] Add replayable event history with before/after state navigation.
 - [ ] Add bounded seeded experiment mode and independent generated-state reference checks.
 - [ ] Add wait-for graph cycle analysis if needed; current RAG is a visualization only.
 - [ ] Expand API and frontend verification for mobile/keyboard/reduced-motion and recovery confirmations.
@@ -30,4 +31,5 @@
 - CI run [38910721706](https://github.com/karkalashivareddy/Deadlock-Detection-and-Recovery-Simulator/actions/runs/38910721706) passed backend build, C tests, live POSIX API smoke, frontend lint, Vitest (4 tests at that revision), and production build.
 - MinGW strict C17 core, parser, and Banker tests pass locally. Sanitizer linking is unavailable in this MinGW installation (`-lasan`/`-lubsan` missing); Ubuntu CI sanitizer run is being added.
 - Current development environment is Windows PowerShell; WSL returns `E_ACCESSDENIED`. Linux/POSIX validation must therefore come from the Ubuntu workflow.
-- Current local frontend verification after adding the Banker panel: `npm.cmd run lint`, `npm.cmd test -- --reporter=dot` (5 tests), and `npm.cmd run build` all pass.
+- Current local frontend verification after adding Banker, checkpoint controls, and import UI: `npm.cmd run lint`, `npm.cmd test -- --reporter=dot` (7 tests), and `npm.cmd run build` pass.
+- Current local portable C tests cover 250 fixed-seed generated scenarios against an independent matrix detector, Banker fixture cases, and checkpoint recovery invariants. POSIX checkpoint/import HTTP integration awaits Ubuntu CI at its next commit.
