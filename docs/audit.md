@@ -91,7 +91,7 @@
 - **IMPLEMENTED:** C17 matrix detection, C validation/recovery helpers, POSIX API endpoints, deterministic fixtures, React matrix editing and termination UI, static instructional guide.
 - **DERIVED:** graph edges, detection trace, final Work and fixture state summaries.
 - **ILLUSTRATIVE:** recovery cost label; no cost is measured.
-- **UNAVAILABLE:** actual kernel-process inspection/recovery, Banker’s executable analysis, checkpoint rollback, resource preemption UI, strict import, event replay and seeded experiments.
+- **UNAVAILABLE:** actual kernel-process inspection/recovery, checkpoint rollback, strict import, event replay and seeded experiments. Banker’s module and frontend panel were added in a later phase below.
 
 ## Incremental work after the baseline (uncommitted)
 
@@ -103,4 +103,10 @@
 
 ### Remaining priority findings
 
-P0 loopback exposure and fragile JSON field search are addressed in source but await Ubuntu CI/live confirmation. P1 HTTP framing has a first bounded implementation but needs live adversarial verification and review of response-size truncation. Resource-preemption compensation semantics still need a clearly represented rollback/restart state. P1 Banker, checkpoint snapshots, import/export schema, replay and deterministic experiments remain unavailable. Existing RAG remains a visualization only. UI state and docs still need updates to distinguish these states accurately.
+P0 loopback exposure and fragile JSON field search are addressed and verified by Ubuntu CI/live smoke at SHA `299fbbf04d5eb101621fa1a2c5d68bf0d9ea9eb9`. P1 HTTP framing has bounded implementation and adversarial smoke coverage; response serialization still uses a bounded buffer and needs explicit overflow reporting. Resource-preemption compensation semantics still need a clearly represented rollback/restart state. Banker’s safety algorithm is implemented in a separate module and exposed through the API and frontend Max-claim editor. Checkpoint snapshots, import/export schema, replay and deterministic experiments remain unavailable. Existing RAG remains a visualization only.
+
+### Banker implementation audit (subsequent phase)
+
+- **Files:** `backend-c/include/banker.h`, `backend-c/src/banker.c`, `/api/safe-state`, and the frontend Banker panel.
+- **Evidence:** separate scenario type carries Max; validation requires Allocation ≤ Max and consistent totals; test covers the canonical safe sequence, unsafe example, invalid claim, and empty boundary. API smoke checks the expected sequence `P1, P3, P4, P0, P2` for the canonical fixture. Frontend sends editable Max claims to this endpoint and labels unsafe as not proving deadlock.
+- **Limit:** this module does not participate in matrix deadlock detection and currently has no built-in Banker fixture library; the frontend initializes Max to Allocation and the student edits claims.

@@ -2,13 +2,18 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
-int main(void){DlScenario s,out;DlDetection d;DlValidation v;
+
+static unsigned rng=0x12C0FFEEu;
+static unsigned next_random(void){rng=rng*1664525u+1013904223u;return rng;}
+static size_t reference(const DlScenario*s,size_t*out){int work[DL_MAX_RESOURCES];bool finish[DL_MAX_PROCESSES]={false};for(size_t j=0;j<s->resource_count;j++)work[j]=s->available[j];for(size_t i=0;i<s->process_count;i++){finish[i]=s->terminated[i];bool zero=true;for(size_t j=0;j<s->resource_count;j++)if(s->allocation[i][j])zero=false;if(zero)finish[i]=true;}bool progress;do{progress=false;for(size_t i=0;i<s->process_count;i++)if(!finish[i]){bool eligible=true;for(size_t j=0;j<s->resource_count;j++)if(s->request[i][j]>work[j])eligible=false;if(eligible){for(size_t j=0;j<s->resource_count;j++)work[j]+=s->allocation[i][j];finish[i]=true;progress=true;}}}while(progress);size_t n=0;for(size_t i=0;i<s->process_count;i++)if(!finish[i])out[n++]=i;return n;}
+static void generated_reference_checks(void){for(unsigned sample=0;sample<250;sample++){DlScenario s;memset(&s,0,sizeof s);snprintf(s.id,sizeof s.id,"generated-%u",sample);s.process_count=1+next_random()%6;s.resource_count=1+next_random()%4;for(size_t i=0;i<s.process_count;i++)snprintf(s.processes[i],DL_ID_LENGTH,"P%zu",i);for(size_t j=0;j<s.resource_count;j++){snprintf(s.resources[j],DL_ID_LENGTH,"R%zu",j);s.available[j]=(int)(next_random()%4);for(size_t i=0;i<s.process_count;i++){s.allocation[i][j]=(int)(next_random()%3);s.request[i][j]=(int)(next_random()%4);}s.total[j]=s.available[j];for(size_t i=0;i<s.process_count;i++)s.total[j]+=s.allocation[i][j];}DlDetection actual;size_t expected[DL_MAX_PROCESSES];assert(dl_detect(&s,&actual).ok);size_t count=reference(&s,expected);assert(count==actual.deadlocked_count);assert(!memcmp(expected,actual.deadlocked,count*sizeof expected[0]));}}
+int main(void){DlScenario s,out,snapshot;DlDetection d,d2;DlValidation v;
  memset(&s,0,sizeof s);v=dl_detect(&s,&d);assert(v.ok&&d.deadlocked_count==0&&d.trace_count==0);
- dl_fixture("no-deadlock",&s);v=dl_detect(&s,&d);assert(v.ok&&d.deadlocked_count==0);
+ dl_fixture("no-deadlock",&s);snapshot=s;v=dl_detect(&s,&d);assert(v.ok&&d.deadlocked_count==0);assert(!memcmp(&snapshot,&s,sizeof s));assert(dl_detect(&s,&d2).ok&&!memcmp(&d,&d2,sizeof d));
  dl_fixture("two-process-deadlock",&s);v=dl_detect(&s,&d);assert(v.ok&&d.deadlocked_count==2&&d.deadlocked[0]==0&&d.deadlocked[1]==1);
  dl_fixture("multi-instance",&s);v=dl_detect(&s,&d);assert(v.ok&&d.deadlocked_count==0);
  dl_fixture("zero-allocation",&s);v=dl_detect(&s,&d);assert(v.ok&&d.deadlocked_count==1&&d.deadlocked[0]==1);for(size_t i=0;i<d.trace_count;i++)assert(d.trace[i].process_index!=0);
  dl_fixture("two-process-deadlock",&s);v=dl_recover_terminate(&s,0,&s);assert(v.ok&&s.available[0]==1&&s.allocation[0][0]==0&&s.request[0][1]==0&&s.terminated[0]);assert(dl_detect(&s,&d).ok&&d.deadlocked_count==0);
  dl_fixture("two-process-deadlock",&s);v=dl_recover_preempt(&s,0,0,&out);assert(!v.ok);s.preemptible[0]=true;v=dl_recover_preempt(&s,0,0,&out);assert(v.ok&&out.available[0]==1&&out.request[0][1]==1&&out.allocation[0][0]==0);assert(dl_detect(&out,&d).ok&&d.deadlocked_count==0);
- s.available[0]=-1;assert(!dl_validate(&s).ok);dl_fixture("two-process-deadlock",&s);s.terminated[0]=true;assert(!dl_validate(&s).ok);
- puts("C deadlocklab tests passed");return 0;}
+ dl_fixture("two-process-deadlock",&s);s.available[0]=-1;assert(!dl_validate(&s).ok);dl_fixture("two-process-deadlock",&s);s.terminated[0]=true;assert(!dl_validate(&s).ok);s=out;s.process_count=DL_MAX_PROCESSES+1;assert(!dl_validate(&s).ok);
+ generated_reference_checks();puts("C deadlocklab tests passed");return 0;}

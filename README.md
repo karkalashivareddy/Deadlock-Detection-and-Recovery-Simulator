@@ -15,6 +15,7 @@ The simulator makes resource allocation state and deadlock detection decisions v
 - POSIX HTTP/1.1 API with deterministic fixtures and stateless detection requests. It binds to `127.0.0.1` only; non-loopback `BIND_ADDRESS` values are refused.
 - Bounded JSON parsing with complete syntax validation, duplicate-key rejection, typed fields, exact scenario keys, and bounded request sizes.
 - Work/Request component trace, deterministic evaluation order, validation and resource-accounting invariants.
+- Separate C Banker’s safety module and `/api/safe-state` endpoint using Max and derived Need; unsafe is explicitly not called deadlock.
 - Process termination and configured resource preemption with rollback/compensation semantics.
 - React + TypeScript light-theme UI with scenario editing, SVG graph, trace controls, fixture library, event list, JSON export, guide, and responsive layouts.
 - Scroll reveals, animated graph edges and nodes, animated trace steps, subtle hover responses, a scroll progress cue, and reduced-motion support.
@@ -22,7 +23,7 @@ The simulator makes resource allocation state and deadlock detection decisions v
 
 ## Limitations
 
-The C HTTP server handles requests sequentially and is intended for a local demo. It accepts bounded HTTP/1.1 requests with three-second socket timeouts; clients must provide `Content-Length` and JSON content type for POST. Transfer-Encoding is rejected. CORS only controls browser access and is not authentication. Scenarios live in deterministic fixtures or the browser session; there is no database. The UI currently exposes process termination, but not resource-preemption or checkpoint-rollback controls. JSON export is available; strict import and deterministic event replay are not implemented. Banker’s safety mode and experiment generation are also not implemented. The graph is SVG-derived from state, without graph-editor drag/pan controls. Recovery-cost values are illustrative and do not represent measured OS behavior.
+The C HTTP server handles requests sequentially and is intended for a local demo. It accepts bounded HTTP/1.1 requests with three-second socket timeouts; clients must provide `Content-Length` and JSON content type for POST. Transfer-Encoding is rejected. CORS only controls browser access and is not authentication. Scenarios live in deterministic fixtures or the browser session; there is no database. The UI currently exposes process termination, but not resource-preemption or checkpoint-rollback controls. JSON export is available; strict import and deterministic event replay are not implemented. Banker’s safety analysis is implemented in C and exposed as an API, but there is no frontend editor yet. Seeded experiment generation is not implemented. The graph is SVG-derived from state, without graph-editor drag/pan controls. Recovery-cost values are illustrative and do not represent measured OS behavior.
 
 ## Architecture
 

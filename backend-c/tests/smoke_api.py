@@ -46,6 +46,15 @@ try:
     recovered = post("/recover", {"action": "terminate", "process": "P1", "scenario": deadlock})
     assert recovered["detection"]["deadlocked"] == []
     assert recovered["scenario"]["available"] == [1, 0]
+    banker = {
+        "id": "banker-safe", "processes": ["P0", "P1", "P2", "P3", "P4"],
+        "resources": ["A", "B", "C"], "total": [10, 5, 7], "available": [3, 3, 2],
+        "allocation": [[0, 1, 0], [2, 0, 0], [3, 0, 2], [2, 1, 1], [0, 0, 2]],
+        "maximum": [[7, 5, 3], [3, 2, 2], [9, 0, 2], [2, 2, 2], [4, 3, 3]],
+    }
+    safe = post("/safe-state", banker)
+    assert safe["safe"] is True
+    assert safe["sequence"] == ["P1", "P3", "P4", "P0", "P2"]
     assert raw_request(b"GET /api/nope HTTP/1.1\r\nHost: localhost\r\n\r\n").startswith(b"HTTP/1.1 404")
     assert raw_request(b"BREW /api/health HTTP/1.1\r\nHost: localhost\r\n\r\n").startswith(b"HTTP/1.1 405")
     assert raw_request(b"POST /api/detect HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\n\r\n{}").startswith(b"HTTP/1.1 400")

@@ -10,8 +10,8 @@ The browser derives process-to-resource request edges and resource-to-process al
 
 ## Banker’s safety algorithm
 
-Not implemented. Banker’s algorithm requires Max claims and Need = Max − Allocation and evaluates existence of a safe completion order. It is an avoidance/safety algorithm, not the general detector implemented here.
+Implemented independently in `backend-c/src/banker.c` with a separate `DlBankerScenario`, so the deadlock detector's Request matrix retains its original meaning. Need is computed as Max − Allocation after validating Allocation ≤ Max and the resource totals. A deterministic input-order scan records Work, Need, eligibility and Work after completion, returning a safe sequence when one exists. An unsafe result means no completion order was found under the declared maximum claims; it does **not** prove a current deadlock. The endpoint is `POST /api/safe-state`.
 
 ## Recovery
 
-Termination marks a process terminated, clears its allocation row, and releases those counts to Available. Preemption is limited to resources marked preemptible; the reclaimed allocation is returned to Available, removed from the victim’s Allocation, and added to its outstanding Request to represent rollback/compensation. Each transition validates the resource invariant. The API reruns detection after recovery. No real kernel state or recovery-cost measurement is involved.
+Termination marks a process terminated, clears both live allocation and request rows, and releases its allocations exactly once. The current preemption transition is a limited educational compensation: it is allowed only for configured preemptible resources, returns the held instances to Available, clears that allocation, and leaves other outstanding requests unchanged. The model does not store process instruction state or a rollback checkpoint, so it cannot claim to reproduce OS preemption semantics. Checkpoint creation/rollback is unavailable. The API validates and reruns detection after recovery. No real kernel state or recovery-cost measurement is involved.

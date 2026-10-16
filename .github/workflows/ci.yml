@@ -11,6 +11,9 @@ jobs:
       - name: Build C API and run C tests
         run: make test
         working-directory: backend-c
+      - name: Run C tests with address and undefined behavior sanitizers
+        run: make sanitize
+        working-directory: backend-c
       - name: Smoke test live C API
         run: python3 tests/smoke_api.py
         working-directory: backend-c
