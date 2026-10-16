@@ -1,0 +1,4 @@
+import type {Detection,Scenario} from './types';
+const base=import.meta.env.VITE_API_URL??'http://localhost:8080/api';
+async function call<T>(path:string,init?:RequestInit):Promise<T>{const response=await fetch(`${base}${path}`,{...init,headers:{'Content-Type':'application/json',...init?.headers}});const data=await response.json();if(!response.ok)throw new Error(data.message??`API error ${response.status}`);return data as T;}
+export const api={scenarios:()=>call<Scenario[]>('/scenarios'),scenario:(id:string)=>call<Scenario>(`/scenarios/${id}`),detect:(scenario:Scenario)=>call<Detection>('/detect',{method:'POST',body:JSON.stringify(scenario)}),recover:(scenario:Scenario,action:string,process?:string,resource?:string)=>call<{scenario:Scenario;detection:Detection}>('/recover',{method:'POST',body:JSON.stringify({scenario,action,process,resource})}),health:()=>call<{status:string;version:string}>('/health')};
