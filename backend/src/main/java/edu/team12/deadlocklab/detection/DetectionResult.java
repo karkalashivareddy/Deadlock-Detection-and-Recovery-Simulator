@@ -1,0 +1,3 @@
+package edu.team12.deadlocklab.detection;
+import java.util.*;
+public record DetectionResult(List<String> deadlocked,List<Step> trace,List<Integer> finalWork){public DetectionResult{deadlocked=List.copyOf(deadlocked);trace=List.copyOf(trace);finalWork=List.copyOf(finalWork);}public record Step(String process,List<Integer> workBefore,List<Integer> request,List<Boolean> componentFits,boolean eligible,List<Integer> releasedAllocation,List<Integer> workAfter,String decision){public Step{workBefore=List.copyOf(workBefore);request=List.copyOf(request);componentFits=List.copyOf(componentFits);releasedAllocation=List.copyOf(releasedAllocation);workAfter=List.copyOf(workAfter);}}}
