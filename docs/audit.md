@@ -111,14 +111,14 @@ Loopback-only binding, token-based JSON parsing, HTTP framing, checkpoint/import
 - **Evidence:** separate scenario type carries Max; validation requires Allocation ≤ Max and consistent totals; test covers the canonical safe sequence, unsafe example, invalid claim, and empty boundary. API smoke checks the expected sequence `P1, P3, P4, P0, P2` for the canonical fixture. Frontend sends editable Max claims to this endpoint and labels unsafe as not proving deadlock.
 - **Limit:** this module does not participate in matrix deadlock detection and currently has no built-in Banker fixture library; the frontend initializes Max to Allocation and the student edits claims.
 
-### Single-instance wait-for analysis (local phase; CI pending)
+### Single-instance wait-for analysis
 
 - **Files:** `backend-c/include/waitfor.h`, `backend-c/src/waitfor.c`, `backend-c/src/server.c` (`/api/wait-for`), `frontend/src/ui/WaitForPanel.tsx`.
 - **Evidence:** the independent module validates the scenario and refuses resource types whose total is not exactly one. It derives process-to-process wait edges from the canonical allocation and request matrices and returns a deterministic closed cycle. C unit tests cover cycle, acyclic chain, immediately satisfiable state, multiple-instance rejection, invalid request, and input immutability. API smoke checks the fixture cycle `P1 → P2 → P1` and rejects the multi-instance fixture. Frontend tests cover response display and disabled state for multi-instance inputs.
-- **Limit:** this is single-instance cycle analysis. The general multi-instance deadlock result still comes from the matrix detector. Local tests exist; CI has not yet been run for this uncommitted phase.
+- **Limit:** this is single-instance cycle analysis. The general multi-instance deadlock result still comes from the matrix detector. Local unit, API smoke, frontend, and Ubuntu CI checks pass at `3b68dc9cf1ade46f567e1987d7963694fa489f94` ([run 39004019893](https://github.com/karkalashivareddy/Deadlock-Detection-and-Recovery-Simulator/actions/runs/39004019893)).
 
-### Response serialization bound (local phase; CI pending)
+### Response serialization bound
 
 - **Files:** `backend-c/src/server.c`, `backend-c/Makefile`, `backend-c/tests/smoke_api.py`.
 - **Evidence:** the API caps serialized output at four MiB and returns a structured `response_too_large` HTTP 500 response on overflow. A smoke-test server built with a 256-byte cap exercises this error.
-- **Limit:** the new change has local verification recorded in the implementation checklist only; CI has not been run for the current uncommitted revision.
+- **Limit:** response serialization is capped at four MiB. The overflow path and low-cap integration regression passed local WSL checks and Ubuntu CI at `3b68dc9cf1ade46f567e1987d7963694fa489f94` ([run 39004019893](https://github.com/karkalashivareddy/Deadlock-Detection-and-Recovery-Simulator/actions/runs/39004019893)).
