@@ -20,9 +20,9 @@
 - [x] Add bounded session-scoped event history with before/after snapshots, detection results, export, and read-only replay navigation.
 - [x] Add strict version 1 replay import with duplicate-key checks, event sequence/state validation, detection trace validation, and bounded file size.
 - [x] Add bounded seeded experiment generation in C and frontend, with deterministic output, derived operation counts, and independent reference detector comparisons.
-- [ ] Add wait-for graph cycle analysis if needed; current RAG is a visualization only.
-- [ ] Expand API and frontend verification for mobile/keyboard/reduced-motion and recovery confirmations.
-- [ ] Review response-size truncation behavior and return a structured error if serialization exceeds the response cap.
+- [x] Add assumption-gated single-instance wait-for cycle analysis, with separate C module, API, frontend panel, and multi-instance rejection.
+- [ ] Complete a manual narrow mobile viewport and keyboard-only walkthrough; reduced-motion styling is present and respects the system preference.
+- [x] Detect bounded response-serialization overflow and return HTTP 500 with a structured `response_too_large` error.
 - [ ] Continue phase-wise commits and rerun CI after every backend or UI integration phase.
 
 ## Verification record
@@ -38,4 +38,7 @@
 - Seeded experiment local verification: WSL `make clean test` passes (including 100 fixed seeds against a separate reference detector); WSL `python3 tests/smoke_api.py` passes; frontend `npm.cmd run lint`, `npm.cmd test -- --reporter=dot` (16 tests), and `npm.cmd run build` pass. CI remains pending for this change.
 - Replay phase commit `b1e617b28e6472b42530457821b26f114b39726c`: GitHub Actions run [38938820468](https://github.com/karkalashivareddy/Deadlock-Detection-and-Recovery-Simulator/actions/runs/38938820468) passed.
 - Replay import commit `17e4ac925f3921ddc6863df0891d87a102c38b2c`: GitHub Actions run [39002033174](https://github.com/karkalashivareddy/Deadlock-Detection-and-Recovery-Simulator/actions/runs/39002033174) passed.
+- Seeded experiment commit `6a935d31a18e4464de971ed39c95fa314e185bdd`: GitHub Actions run [39002374458](https://github.com/karkalashivareddy/Deadlock-Detection-and-Recovery-Simulator/actions/runs/39002374458) passed.
+- Response overflow regression: WSL `make clean test`, `python3 tests/smoke_api.py` (including small-cap server), and `make sanitize` pass. CI is pending for this phase.
+- Wait-for analysis local verification: WSL `make sanitize`, `make test`, and live API smoke all passed, including deterministic `P1 → P2 → P1` cycle detection and multi-instance rejection. Frontend `npm.cmd run lint`, Vitest (19 tests), and `npm.cmd run build` pass after the panel and recovery-confirmation test. No CI run has been made for these local changes yet.
 - Current local portable C tests cover 250 fixed-seed generated scenarios against an independent matrix detector, Banker fixture cases, and checkpoint recovery invariants. POSIX checkpoint/import HTTP integration awaits Ubuntu CI at its next commit.

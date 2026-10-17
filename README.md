@@ -22,9 +22,10 @@ The application makes deadlock analysis an explainable investigation workflow: o
 - Bounded JSON parsing with complete syntax validation, duplicate-key rejection, typed fields, exact scenario keys, and bounded request sizes.
 - Work/Request component trace, deterministic evaluation order, validation and resource-accounting invariants.
 - Separate C Banker’s safety module and `/api/safe-state` endpoint using Max and derived Need; unsafe is explicitly not called deadlock.
+- Assumption-gated single-instance wait-for cycle analysis through `/api/wait-for`; the API rejects multi-instance resource models.
 - Process termination, checkpoint restore, and checkpoint-backed rollback of configured preemptible resources.
 - Bounded seeded experiment generation through the C API, with deterministic state, detection result, and derived evaluation counts.
-- React + TypeScript light-theme UI with scenario editing, SVG graph, trace controls, fixture library, event list, JSON export, guide, and responsive layouts.
+- React + TypeScript light-theme UI with scenario editing, SVG graph, matrix and wait-for analysis, trace controls, fixture library, event list, JSON export, guide, and responsive layouts.
 - Scroll reveals, animated graph edges and nodes, animated trace steps, subtle hover responses, a scroll progress cue, and reduced-motion support.
 - GitHub Actions builds/tests the C server on Ubuntu and checks/tests/builds the frontend.
 

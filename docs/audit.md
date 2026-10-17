@@ -103,10 +103,22 @@
 
 ### Remaining priority findings
 
-Loopback-only binding, token-based JSON parsing, HTTP framing, checkpoint/import, and Banker endpoints have passed prior Ubuntu CI runs. Event history/replay now supports bounded snapshots, detection results, export, read-only navigation, and strict replay-record import. Seeded experiments use a fixed documented PRNG, strict C model validation, matrix detection, a separately coded reference detector in tests, and UI/API integration. Remaining audit items include explicit response-serialization overflow errors and optional wait-for cycle analysis; the current graph is a visualization and does not claim cycle detection.
+Loopback-only binding, token-based JSON parsing, HTTP framing, checkpoint/import, and Banker endpoints have passed prior Ubuntu CI runs. Event history/replay supports bounded snapshots, detection results, export, read-only navigation, and strict replay-record import. Seeded experiments use a fixed documented PRNG, strict C model validation, matrix detection, a separately coded reference detector in tests, and UI/API integration. The current response-overflow change returns a structured error and has a low-cap live smoke regression; its CI run is pending. The current graph is a visualization and does not claim cycle detection.
 
 ### Banker implementation audit (subsequent phase)
 
 - **Files:** `backend-c/include/banker.h`, `backend-c/src/banker.c`, `/api/safe-state`, and the frontend Banker panel.
 - **Evidence:** separate scenario type carries Max; validation requires Allocation ≤ Max and consistent totals; test covers the canonical safe sequence, unsafe example, invalid claim, and empty boundary. API smoke checks the expected sequence `P1, P3, P4, P0, P2` for the canonical fixture. Frontend sends editable Max claims to this endpoint and labels unsafe as not proving deadlock.
 - **Limit:** this module does not participate in matrix deadlock detection and currently has no built-in Banker fixture library; the frontend initializes Max to Allocation and the student edits claims.
+
+### Single-instance wait-for analysis (local phase; CI pending)
+
+- **Files:** `backend-c/include/waitfor.h`, `backend-c/src/waitfor.c`, `backend-c/src/server.c` (`/api/wait-for`), `frontend/src/ui/WaitForPanel.tsx`.
+- **Evidence:** the independent module validates the scenario and refuses resource types whose total is not exactly one. It derives process-to-process wait edges from the canonical allocation and request matrices and returns a deterministic closed cycle. C unit tests cover cycle, acyclic chain, immediately satisfiable state, multiple-instance rejection, invalid request, and input immutability. API smoke checks the fixture cycle `P1 → P2 → P1` and rejects the multi-instance fixture. Frontend tests cover response display and disabled state for multi-instance inputs.
+- **Limit:** this is single-instance cycle analysis. The general multi-instance deadlock result still comes from the matrix detector. Local tests exist; CI has not yet been run for this uncommitted phase.
+
+### Response serialization bound (local phase; CI pending)
+
+- **Files:** `backend-c/src/server.c`, `backend-c/Makefile`, `backend-c/tests/smoke_api.py`.
+- **Evidence:** the API caps serialized output at four MiB and returns a structured `response_too_large` HTTP 500 response on overflow. A smoke-test server built with a 256-byte cap exercises this error.
+- **Limit:** the new change has local verification recorded in the implementation checklist only; CI has not been run for the current uncommitted revision.
