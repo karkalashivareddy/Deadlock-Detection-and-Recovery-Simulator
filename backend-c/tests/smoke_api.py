@@ -59,6 +59,21 @@ try:
     safe = post("/safe-state", banker)
     assert safe["safe"] is True
     assert safe["sequence"] == ["P1", "P3", "P4", "P0", "P2"]
+    experiment_input = {"seed": 73012, "processCount": 5, "resourceCount": 3}
+    experiment = post("/experiments", experiment_input)
+    repeated = post("/experiments", experiment_input)
+    assert experiment == repeated
+    assert experiment["algorithmVersion"] == "xorshift32-v1"
+    assert experiment["metrics"]["detectionEvaluations"] == len(experiment["detection"]["trace"])
+    assert experiment["metrics"]["unfinishedProcesses"] == len(experiment["detection"]["deadlocked"])
+    for j, total in enumerate(experiment["scenario"]["total"]):
+        allocated = sum(row[j] for row in experiment["scenario"]["allocation"])
+        assert total == experiment["scenario"]["available"][j] + allocated
+    try:
+        post("/experiments", {"seed": 1, "processCount": 13, "resourceCount": 1})
+        raise AssertionError("unbounded experiment unexpectedly accepted")
+    except Exception as error:
+        assert "400" in str(error)
     current = get("/scenarios/no-deadlock")
     assert post("/import", {"schemaVersion": 1, "scenario": current}) == current
     checkpoint = copy.deepcopy(current)

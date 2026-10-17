@@ -10,8 +10,8 @@ all: $(BUILD)/deadlocklab-server
 $(BUILD):
 	mkdir -p $(BUILD)
 
-$(BUILD)/deadlocklab-server: $(CORE) src/json.c src/banker.c src/server.c include/deadlocklab.h include/banker.h include/json.h | $(BUILD)
-	$(CC) $(CFLAGS) $(INCLUDE) $(CORE) src/json.c src/banker.c src/server.c -o $@
+$(BUILD)/deadlocklab-server: $(CORE) src/json.c src/banker.c src/experiment.c src/server.c include/deadlocklab.h include/banker.h include/experiment.h include/json.h | $(BUILD)
+	$(CC) $(CFLAGS) $(INCLUDE) $(CORE) src/json.c src/banker.c src/experiment.c src/server.c -o $@
 
 $(BUILD)/test-deadlocklab: $(CORE) tests/test_deadlocklab.c include/deadlocklab.h | $(BUILD)
 	$(CC) $(CFLAGS) $(INCLUDE) $(CORE) tests/test_deadlocklab.c -o $@
@@ -22,10 +22,14 @@ $(BUILD)/test-json: src/json.c tests/test_json.c include/json.h | $(BUILD)
 $(BUILD)/test-banker: $(CORE) src/banker.c tests/test_banker.c include/banker.h include/deadlocklab.h | $(BUILD)
 	$(CC) $(CFLAGS) $(INCLUDE) $(CORE) src/banker.c tests/test_banker.c -o $@
 
-test: $(BUILD)/test-deadlocklab $(BUILD)/test-json $(BUILD)/test-banker $(BUILD)/deadlocklab-server
+$(BUILD)/test-experiment: $(CORE) src/experiment.c tests/test_experiment.c include/experiment.h include/deadlocklab.h | $(BUILD)
+	$(CC) $(CFLAGS) $(INCLUDE) $(CORE) src/experiment.c tests/test_experiment.c -o $@
+
+test: $(BUILD)/test-deadlocklab $(BUILD)/test-json $(BUILD)/test-banker $(BUILD)/test-experiment $(BUILD)/deadlocklab-server
 	$(BUILD)/test-deadlocklab
 	$(BUILD)/test-json
 	$(BUILD)/test-banker
+	$(BUILD)/test-experiment
 
 sanitize: | $(BUILD)
 	$(CC) -std=c17 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=address,undefined -fno-omit-frame-pointer $(INCLUDE) $(CORE) tests/test_deadlocklab.c -o $(BUILD)/test-deadlocklab-sanitize
@@ -34,6 +38,8 @@ sanitize: | $(BUILD)
 	$(BUILD)/test-json-sanitize
 	$(CC) -std=c17 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=address,undefined -fno-omit-frame-pointer $(INCLUDE) $(CORE) src/banker.c tests/test_banker.c -o $(BUILD)/test-banker-sanitize
 	$(BUILD)/test-banker-sanitize
+	$(CC) -std=c17 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=address,undefined -fno-omit-frame-pointer $(INCLUDE) $(CORE) src/experiment.c tests/test_experiment.c -o $(BUILD)/test-experiment-sanitize
+	$(BUILD)/test-experiment-sanitize
 
 clean:
 	rm -rf $(BUILD)

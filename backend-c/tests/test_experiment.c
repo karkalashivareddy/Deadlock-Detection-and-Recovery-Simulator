@@ -1,0 +1,7 @@
+#include "experiment.h"
+#include <assert.h>
+#include <stdio.h>
+#include <string.h>
+
+static size_t reference(const DlScenario*s,size_t*out){int work[DL_MAX_RESOURCES];bool finish[DL_MAX_PROCESSES]={false};for(size_t j=0;j<s->resource_count;j++)work[j]=s->available[j];for(size_t i=0;i<s->process_count;i++){bool zero=true;for(size_t j=0;j<s->resource_count;j++)if(s->allocation[i][j])zero=false;finish[i]=s->terminated[i]||zero;}bool progress;do{progress=false;for(size_t i=0;i<s->process_count;i++)if(!finish[i]){bool eligible=true;for(size_t j=0;j<s->resource_count;j++)if(s->request[i][j]>work[j])eligible=false;if(eligible){for(size_t j=0;j<s->resource_count;j++)work[j]+=s->allocation[i][j];finish[i]=true;progress=true;}}}while(progress);size_t count=0;for(size_t i=0;i<s->process_count;i++)if(!finish[i])out[count++]=i;return count;}
+int main(void){for(uint32_t seed=0;seed<100;seed++){DlScenario a,b;assert(dl_experiment_generate(seed,6,4,&a).ok);assert(dl_experiment_generate(seed,6,4,&b).ok);assert(!memcmp(&a,&b,sizeof a));assert(dl_validate(&a).ok);DlDetection d;assert(dl_detect(&a,&d).ok);size_t expected[DL_MAX_PROCESSES];size_t n=reference(&a,expected);assert(n==d.deadlocked_count);assert(!memcmp(expected,d.deadlocked,n*sizeof expected[0]));}DlScenario s;assert(!dl_experiment_generate(1,0,1,&s).ok);assert(!dl_experiment_generate(1,13,1,&s).ok);assert(!dl_experiment_generate(1,1,7,&s).ok);assert(!dl_experiment_generate(1,1,1,NULL).ok);puts("C seeded experiment tests passed");return 0;}

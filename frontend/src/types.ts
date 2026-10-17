@@ -5,3 +5,4 @@ export type BankerScenario={id:string;processes:string[];resources:string[];tota
 export type BankerTraceStep={process:string;workBefore:number[];need:number[];eligible:boolean;workAfter:number[]};
 export type BankerResult={algorithm:'banker_safety';safe:boolean;interpretation:string;available:number[];sequence:string[];unfinished:string[];trace:BankerTraceStep[]};
 export type SimulationEvent={sequence:number;type:'scenario_change'|'detection'|'recovery';scenarioId:string;label:string;before:Scenario|null;after:Scenario;detection?:Detection};
+export type ExperimentResult={seed:number;algorithmVersion:string;scenario:Scenario;detection:Detection;metrics:{detectionEvaluations:number;unfinishedProcesses:number}};

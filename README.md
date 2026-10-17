@@ -23,17 +23,18 @@ The application makes deadlock analysis an explainable investigation workflow: o
 - Work/Request component trace, deterministic evaluation order, validation and resource-accounting invariants.
 - Separate C Banker’s safety module and `/api/safe-state` endpoint using Max and derived Need; unsafe is explicitly not called deadlock.
 - Process termination, checkpoint restore, and checkpoint-backed rollback of configured preemptible resources.
+- Bounded seeded experiment generation through the C API, with deterministic state, detection result, and derived evaluation counts.
 - React + TypeScript light-theme UI with scenario editing, SVG graph, trace controls, fixture library, event list, JSON export, guide, and responsive layouts.
 - Scroll reveals, animated graph edges and nodes, animated trace steps, subtle hover responses, a scroll progress cue, and reduced-motion support.
 - GitHub Actions builds/tests the C server on Ubuntu and checks/tests/builds the frontend.
 
 ## Limitations
 
-The C HTTP server handles requests sequentially and is intended for a local demo. It accepts bounded HTTP/1.1 requests with a three-second socket inactivity timeout and an overall bounded header/body read; clients must provide `Content-Length` and JSON content type for POST. Transfer-Encoding is rejected. CORS only controls browser access and is not authentication. Scenarios, checkpoints, and event history are session-scoped; there is no database. Checkpoints are immutable browser-session snapshots sent with recovery requests. Termination, checkpoint restore, and checkpoint-backed victim rollback are implemented; the simulator does not restore instruction-level process state. Scenario import/export uses a strict version 1 envelope. Event history stores bounded before/after snapshots and detection results with read-only replay and strict version 1 replay import. Seeded experiment generation is not implemented. Banker’s safety analysis has a frontend Max-claim editor. The graph is SVG-derived from state, without graph-editor drag/pan controls. Recovery-cost values are illustrative and do not represent measured OS behavior.
+The C HTTP server handles requests sequentially and is intended for a local demo. It accepts bounded HTTP/1.1 requests with a three-second socket inactivity timeout and an overall bounded header/body read; clients must provide `Content-Length` and JSON content type for POST. Transfer-Encoding is rejected. CORS only controls browser access and is not authentication. Scenarios, checkpoints, and event history are session-scoped; there is no database. Checkpoints are immutable browser-session snapshots sent with recovery requests. Termination, checkpoint restore, and checkpoint-backed victim rollback are implemented; the simulator does not restore instruction-level process state. Scenario import/export uses a strict version 1 envelope. Event history stores bounded before/after snapshots and detection results with read-only replay and strict version 1 replay import. Experiment generation is bounded to 12 processes and 6 resources; its detector evaluation count is derived from the returned trace and is not a performance benchmark. Banker’s safety analysis has a frontend Max-claim editor. The graph is SVG-derived from state, without graph-editor drag/pan controls. Recovery-cost values are illustrative and do not represent measured OS behavior.
 
 ## Future scope
 
-Future work may add seeded experiment suites, reproducible recovery-policy comparisons, and richer teaching exercises. Optional real-system telemetry would be a separate capability; the current simulator does not monitor or recover actual operating-system processes.
+Future work may add reproducible recovery-policy comparisons and richer teaching exercises. Optional real-system telemetry would be a separate capability; the current simulator does not monitor or recover actual operating-system processes.
 
 ## Architecture
 
