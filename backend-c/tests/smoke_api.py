@@ -4,6 +4,7 @@ import os
 import subprocess
 import time
 import socket
+from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 refused = subprocess.run(["./build/deadlocklab-server"], env={**os.environ, "BIND_ADDRESS": "0.0.0.0"}, capture_output=True, text=True)
@@ -47,6 +48,15 @@ try:
     deadlock = get("/scenarios/two-process-deadlock")
     result = post("/detect", deadlock)
     assert result["deadlocked"] == ["P1", "P2"]
+    wait_for = post("/wait-for", deadlock)
+    assert wait_for["algorithm"] == "single_instance_wait_for_cycle"
+    assert wait_for["hasCycle"] is True
+    assert wait_for["cycle"] == ["P1", "P2", "P1"]
+    try:
+        post("/wait-for", get("/scenarios/multi-instance"))
+        raise AssertionError("multi-instance scenario unexpectedly accepted by wait-for detector")
+    except Exception as error:
+        assert "400" in str(error)
     recovered = post("/recover", {"action": "terminate", "process": "P1", "scenario": deadlock})
     assert recovered["detection"]["deadlocked"] == []
     assert recovered["scenario"]["available"] == [1, 0]
@@ -106,6 +116,24 @@ try:
     nul_body = json.dumps({"schemaVersion": 1, "scenario": current}).encode() + b"\x00ignored"
     nul_response = raw_request(b"POST /api/import HTTP/1.1\r\nHost: localhost\r\nContent-Length: " + str(len(nul_body)).encode() + b"\r\nContent-Type: application/json\r\n\r\n" + nul_body)
     assert nul_response.startswith(b"HTTP/1.1 400")
+    small = subprocess.Popen(["./build/deadlocklab-server-small"], env={**os.environ, "PORT": "8081"})
+    try:
+        for _ in range(30):
+            try:
+                urlopen("http://127.0.0.1:8081/api/health", timeout=1).read()
+                break
+            except Exception:
+                time.sleep(0.1)
+        try:
+            urlopen("http://127.0.0.1:8081/api/scenarios", timeout=2)
+            raise AssertionError("oversized serialized response unexpectedly succeeded")
+        except HTTPError as error:
+            assert error.code == 500
+            payload = json.loads(error.read())
+            assert payload["error"] == "response_too_large"
+    finally:
+        small.terminate()
+        small.wait(timeout=5)
     print("C POSIX API smoke tests passed")
 finally:
     server.terminate()
