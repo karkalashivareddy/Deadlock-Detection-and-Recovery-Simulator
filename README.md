@@ -3,11 +3,17 @@
 **Team 12 · Operating Systems**  
 K. Shiva Reddy (2520030105) · Dakur Manoj Kumar (2520030040)
 
-DeadlockLab is a Linux-first operating-systems laboratory. Its detection and recovery engine is written in C17, its API is a small POSIX socket server, and its responsive browser interface is React and TypeScript.
+**Observe. Explain. Recover.**
+
+Deadlocks are difficult to understand because processes can hold resources while waiting for other resources. A static diagram can show a circular dependency, but it does not demonstrate how the system reaches that state, why a detector identifies it, or how recovery changes the outcome.
+
+DeadlockLab is an interactive operating-systems laboratory for constructing or loading resource-allocation scenarios, running deadlock detection, inspecting the algorithm’s reasoning, applying supported recovery strategies, and verifying the resulting state. It is built for student exploration and instructor demonstrations: users can change allocations and requests, then observe how those changes affect detection and recovery.
+
+The engine is implemented in C17, with a POSIX HTTP API and a React/TypeScript interface. The C engine validates resource state, runs matrix-based deadlock detection and Banker’s safety analysis, and applies supported recovery transitions. The frontend visualizes the canonical scenario state and the API’s trace.
 
 ## Problem and objectives
 
-The simulator makes resource allocation state and deadlock detection decisions visible. Students can load deterministic examples, edit processes, resource types, totals, availability, allocation and request matrices, inspect a resource-allocation graph, step through the matrix detector, and simulate recovery.
+The application makes deadlock analysis an explainable investigation workflow: observe the resource-allocation graph, understand the algorithm’s reasoning, choose a recovery strategy, and verify the outcome. The interface is organized around this reasoning process rather than only displaying a final result.
 
 ## Features
 
@@ -23,7 +29,11 @@ The simulator makes resource allocation state and deadlock detection decisions v
 
 ## Limitations
 
-The C HTTP server handles requests sequentially and is intended for a local demo. It accepts bounded HTTP/1.1 requests with a three-second socket inactivity timeout and an overall bounded header/body read; clients must provide `Content-Length` and JSON content type for POST. Transfer-Encoding is rejected. CORS only controls browser access and is not authentication. Scenarios, checkpoints, and event history are session-scoped; there is no database. Checkpoints are immutable browser-session snapshots sent with recovery requests. Termination, checkpoint restore, and checkpoint-backed victim rollback are implemented; the simulator does not restore instruction-level process state. Scenario import/export uses a strict version 1 envelope. Event history stores bounded before/after snapshots and detection results with read-only replay; replay record import and seeded experiment generation are not implemented. Banker’s safety analysis has a frontend Max-claim editor. The graph is SVG-derived from state, without graph-editor drag/pan controls. Recovery-cost values are illustrative and do not represent measured OS behavior.
+The C HTTP server handles requests sequentially and is intended for a local demo. It accepts bounded HTTP/1.1 requests with a three-second socket inactivity timeout and an overall bounded header/body read; clients must provide `Content-Length` and JSON content type for POST. Transfer-Encoding is rejected. CORS only controls browser access and is not authentication. Scenarios, checkpoints, and event history are session-scoped; there is no database. Checkpoints are immutable browser-session snapshots sent with recovery requests. Termination, checkpoint restore, and checkpoint-backed victim rollback are implemented; the simulator does not restore instruction-level process state. Scenario import/export uses a strict version 1 envelope. Event history stores bounded before/after snapshots and detection results with read-only replay and strict version 1 replay import. Seeded experiment generation is not implemented. Banker’s safety analysis has a frontend Max-claim editor. The graph is SVG-derived from state, without graph-editor drag/pan controls. Recovery-cost values are illustrative and do not represent measured OS behavior.
+
+## Future scope
+
+Future work may add seeded experiment suites, reproducible recovery-policy comparisons, and richer teaching exercises. Optional real-system telemetry would be a separate capability; the current simulator does not monitor or recover actual operating-system processes.
 
 ## Architecture
 

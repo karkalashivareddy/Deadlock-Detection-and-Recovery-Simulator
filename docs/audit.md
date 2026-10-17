@@ -103,7 +103,7 @@
 
 ### Remaining priority findings
 
-Loopback-only binding, token-based JSON parsing, HTTP framing and checkpoint/import endpoints are verified by Ubuntu CI/live smoke at SHA `40fb4437cdfbf36b407f331c309a3c3f2ce59991`. The Banker phase also passed Ubuntu CI and sanitizer checks at SHA `03340bf97aa88cf14487bcbefc4ad03dbb48e670`. Response serialization still uses a bounded buffer and should report overflow explicitly. Checkpoint recovery and strict import are implemented. Event history/replay UI now has bounded session events, before/after snapshots, detection results, export and read-only navigation; this phase has local frontend verification but awaits its own CI commit. Replay-record import and deterministic experiments remain unavailable. Existing RAG remains a visualization only.
+Loopback-only binding, token-based JSON parsing, HTTP framing and checkpoint/import endpoints are verified by Ubuntu CI/live smoke at SHA `40fb4437cdfbf36b407f331c309a3c3f2ce59991`. The Banker phase also passed Ubuntu CI and sanitizer checks at SHA `03340bf97aa88cf14487bcbefc4ad03dbb48e670`. Response serialization still uses a bounded buffer and should report overflow explicitly. Checkpoint recovery and strict scenario import are implemented. Event history/replay has bounded session snapshots, detection results, export, read-only navigation, and strict replay-record import in the current uncommitted phase; local lint and frontend tests pass, with build/CI pending. Deterministic experiments remain unavailable. Existing RAG remains a visualization only.
 
 ### Banker implementation audit (subsequent phase)
 
